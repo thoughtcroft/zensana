@@ -1,9 +1,6 @@
 require "zensana/version"
-require "thor"
+require "zensana/command"
 
-class Zensana < Thor
-  desc "help", "display some help text"
-  def help
-    puts "Is this helpful? No!"
-  end
+module Zensana
+  # your code goes here
 end
