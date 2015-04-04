@@ -16,14 +16,11 @@ module Zensana
     end
 
     def request(method, path, params={}, &block)
-      result = HTTParty.send(
-        method,
-        path,
-        params.merge(
-          :basic_auth => @auth,
-          :headers => { 'Content-Type' => 'application/json' }
-        )
-      )
+      params.merge!({
+        :basic_auth => @auth,
+        :headers => { 'Content-Type' => 'application/json' }
+      })
+      result = HTTParty.send(method, path, params)
 
       Zensana::Error.handle_http_errors result
 
