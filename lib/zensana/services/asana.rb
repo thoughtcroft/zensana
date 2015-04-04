@@ -5,7 +5,9 @@ module Zensana
   class Asana
     include HTTParty
     base_uri 'https://app.asana.com/api/1.0'
-    default_timeout 5
+    default_timeout 10
+    debug_output
+    headers 'Content-Type' => 'application/json'
 
     def initialize(user, pword)
       @auth = {username: user, password: pword}
@@ -15,14 +17,11 @@ module Zensana
       request :get, path, options, &block
     end
 
-    def request(method, path, params={}, &block)
-      params.merge!({
-        :basic_auth => @auth,
-        :headers => { 'Content-Type' => 'application/json' }
-      })
-      result = HTTParty.send(method, path, params)
+    def request(method, path, options={}, &block)
+      options.merge!({:basic_auth => @auth})
+      result = HTTParty.send(method, path, options)
 
-      Zensana::Error.handle_http_errors result
+      Error.handle_http_errors result
 
       Response.new(result).tap do |response|
         block.call(response) if block_given?
