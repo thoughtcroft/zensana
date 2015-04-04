@@ -13,6 +13,16 @@ module Zensana
     def initialize(msg=nil)
       super msg || self.class.msg
     end
+
+    def self.handle_http_errors(http_response)
+      message = JSON.parse(http_response.body)['errors'].first['message'] rescue nil
+      case http_response.code
+      when 200 then return
+      when 404 then raise NotFound, message
+      when 401..403 then raise AccessDenied, message
+      else raise Unprocessable, message
+      end
+    end
   end
 
   class AccessDenied < Error
@@ -27,13 +37,4 @@ module Zensana
     self.msg = "That item does not exist"
   end
 
-  def self.handle_http_errors(http_response)
-    message = JSON.parse(http_response.body)['errors'].first['message'] rescue nil
-    case http_response.code
-    when 200 then return
-    when 404 then raise NotFound, message
-    when 401..403 then raise AccessDenied, message
-    else raise Unprocessable, message
-    end
-  end
 end

@@ -5,21 +5,16 @@ module Zensana
   class Asana
     include HTTParty
     base_uri 'https://app.asana.com/api/1.0'
-    default_timeout 10
-    debug_output
     headers 'Content-Type' => 'application/json'
+    default_timeout 10
 
     def initialize(user, pword)
       @auth = {username: user, password: pword}
     end
 
-    def get(path, options={}, &block)
-      request :get, path, options, &block
-    end
-
     def request(method, path, options={}, &block)
       options.merge!({:basic_auth => @auth})
-      result = HTTParty.send(method, path, options)
+      result = self.class.send(method, path, options)
 
       Error.handle_http_errors result
 
