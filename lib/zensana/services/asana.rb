@@ -9,11 +9,10 @@ module Zensana
     default_timeout 10
 
     def initialize(user, pword)
-      @auth = {username: user, password: pword}
+      self.class.basic_ath user, pword
     end
 
     def request(method, path, options={}, &block)
-      options.merge!({:basic_auth => @auth})
       result = self.class.send(method, path, options)
 
       Zensana::Error.handle_http_errors result
