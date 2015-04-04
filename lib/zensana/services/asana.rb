@@ -16,7 +16,7 @@ module Zensana
       options.merge!({:basic_auth => @auth})
       result = self.class.send(method, path, options)
 
-      Error.handle_http_errors result
+      Zensana::Error.handle_http_errors result
 
       Response.new(result).tap do |response|
         block.call(response) if block_given?
