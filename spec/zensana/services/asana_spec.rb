@@ -7,6 +7,7 @@ describe "Zensana::Asana" do
     let(:response) { asana.request(:get, "/path") }
 
     it "it returns a valid response object" do
+      pending "Needs a mock"
       expect(response).to be_a(Zensana::Asana::Response)
     end
   end

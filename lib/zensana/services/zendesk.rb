@@ -2,13 +2,13 @@ require 'httparty'
 require 'json'
 
 module Zensana
-  class Asana
+  class Zendesk
     include HTTParty
-    base_uri 'https://app.asana.com/api/1.0'
     headers 'Content-Type' => 'application/json'
     default_timeout 10
 
-    def initialize(user, pword)
+    def initialize(user, pword, subdomain)
+      self.class.base_uri "https://#{subdomain}.zendesk.com/api/v2"
       self.class.basic_auth user, pword
     end
 
@@ -25,7 +25,7 @@ module Zensana
     class Response
       def initialize(http_response)
         @ok   = http_response.success?
-        @data = JSON.parse(http_response.body)['data'] rescue {}
+        @data = JSON.parse(http_response.body) rescue {}
       end
 
       def ok?
