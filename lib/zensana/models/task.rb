@@ -8,6 +8,10 @@ module Zensana
       fetch(id)
     end
 
+    def subtasks
+      @subtasks ||= fetch_subtasks(self.id)
+    end
+
     def method_missing(name, *args, &block)
       attributes[name.to_s] || super
     end
@@ -16,7 +20,6 @@ module Zensana
 
     def fetch(id)
       @attributes = asana_host.fetch("/tasks/#{id}")
-      @attributes['subtasks'] = fetch_subtasks(id) if @attributes
     end
 
     def fetch_subtasks(id)

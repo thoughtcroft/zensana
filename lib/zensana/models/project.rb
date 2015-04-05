@@ -14,7 +14,10 @@ module Zensana
                     else
                       fetch_by_name(name)
                     end
-      @attributes['tasks'] = fetch_tasks(self.id) if @attributes
+    end
+
+    def tasks
+      @tasks ||= fetch_tasks(self.id)
     end
 
     def list
