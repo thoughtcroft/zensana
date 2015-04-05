@@ -5,18 +5,16 @@ module Zensana
     attr_reader :attributes
 
     def initialize(spec=nil)
-      @attributes = {}
       fetch(spec) if spec
     end
 
     def fetch(name)
-      reset_attrs
-      if name.is_a?(Fixnum)
-        fetch_by_id(name)
-      else
-        fetch_by_name(name)
-      end
-
+      @attributes = if name.is_a?(Fixnum)
+                      fetch_by_id(name)
+                    else
+                      fetch_by_name(name)
+                    end
+      @attributes['tasks'] = fetch_tasks(self.id) if @attributes
     end
 
     def list
@@ -27,21 +25,10 @@ module Zensana
       attributes[name.to_s] || super
     end
 
-    def tasks
-      raise ArgumentError, "Fetch a project first!" unless self.id
-      @tasks ||= begin
-                   list = {}
-                   task_list(self.id).each do |task|
-                     list[task['id']] = Zensana::Task.new(task['id'])
-                   end
-                   list
-                 end
-    end
-
     private
 
     def fetch_by_id(id)
-      @attributes = asana_host.fetch("/projects/#{id}")
+      asana_host.fetch("/projects/#{id}")
     end
 
     def fetch_by_name(name)
@@ -53,15 +40,18 @@ module Zensana
       raise RegexpError, "'#{name}' is an invalid regular expression"
     end
 
+    def fetch_tasks(id)
+      list = []
+      task_list(id).each do |task|
+        list << Zensana::Task.new(task['id'])
+      end
+      list
+    end
+
     def task_list(id)
       asana_host.fetch "/projects/#{id}/tasks"
     rescue NotFound
       nil
-    end
-
-    def reset_attrs
-      @attributes = {}
-      @tasks      = {}
     end
   end
 end
