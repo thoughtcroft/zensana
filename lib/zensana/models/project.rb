@@ -8,11 +8,11 @@ module Zensana
       fetch(spec) if spec
     end
 
-    def fetch(name)
-      @attributes = if name.is_a?(Fixnum)
-                      fetch_by_id(name)
+    def fetch(spec)
+      @attributes = if spec.is_a?(Fixnum)
+                      fetch_by_id(spec)
                     else
-                      fetch_by_name(name)
+                      fetch_by_name(spec)
                     end
     end
 
@@ -44,11 +44,7 @@ module Zensana
     end
 
     def fetch_tasks(id)
-      list = []
-      task_list(id).each do |task|
-        list << Zensana::Task.new(task['id'])
-      end
-      list
+      task_list(id).map { |t| Zensana::Task.new(t['id']) }
     end
 
     def task_list(id)

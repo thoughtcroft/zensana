@@ -5,7 +5,7 @@ module Zensana
     attr_reader :attributes
 
     def initialize(id)
-      fetch(id)
+      @attributes = fetch(id)
     end
 
     def subtasks
@@ -23,15 +23,11 @@ module Zensana
     private
 
     def fetch(id)
-      @attributes = asana_host.fetch("/tasks/#{id}")
+      asana_host.fetch("/tasks/#{id}")
     end
 
     def fetch_subtasks(id)
-      list = []
-      subtask_list(id).each do |subtask|
-        list << Zensana::Task.new(subtask['id'])
-      end
-      list
+      subtask_list(id).map { |s| Zensana::Task.new(s['id']) }
     end
 
     def subtask_list(id)

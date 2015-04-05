@@ -26,7 +26,7 @@ module Zensana
   end
 
   class AccessDenied < Error
-    self.msg = "Access denied"
+    self.msg = "Access denied - check credentials"
   end
 
   class Unprocessable < Error
@@ -36,5 +36,4 @@ module Zensana
   class NotFound < Error
     self.msg = "That item does not exist"
   end
-
 end
