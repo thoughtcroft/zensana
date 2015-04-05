@@ -66,6 +66,10 @@ module Zensana
       def to_a
         @data
       end
+
+      def to_s
+        JSON.pretty_generate @data
+      end
     end
   end
 end
