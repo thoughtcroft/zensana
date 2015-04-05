@@ -18,11 +18,16 @@ module Zensana
     end
 
     def list
-      @list ||= Zensana::Asana.inst.fetch "/projects"
+      @list ||= asana_host.fetch "/projects"
     end
 
     def method_missing(name, *args, &block)
       attributes[name.to_s] || super
+    end
+
+    def tasks
+      raise ArgumentError, "Fetch a project first!" unless self.id
+      asana_host.fetch "/projects/#{self.id}/tasks"
     end
 
     private
