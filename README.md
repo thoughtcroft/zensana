@@ -1,7 +1,8 @@
 # Zensana
 
-This gem will take an Asana project export JSON file and import it into
-ZenDesk using the API.
+This gem provides acces to the Asana API and ZenDesk Ticket Import API
+for the purpose of turning Tasks from Asana Projects into ZenDesk
+tickets.
 
 ## Installation
 
@@ -22,6 +23,32 @@ Or install it yourself as:
 ## Usage
 
 TODO: Write usage instructions here
+
+## Authenticating
+
+### Asana
+
+Asana users can connect to the API using their username / password or
+by creating an API key. The following environment vars are supported:
+
+```ruby
+ASANA_API_KEY
+  or
+ASANA_USERNAME
+ASANA_PASSWORD
+```
+
+### ZendDesk
+
+ZenDesk by default requires username / password to connect to the API,
+and the endpoint is defined by the organisation domain name. The following
+environment vars must be provided to connect:
+
+```ruby
+ZENDESK_USERNAME
+ZENDESK_PASSWORD
+ZENDESK_DOMAIN
+```
 
 ## Contributing
 

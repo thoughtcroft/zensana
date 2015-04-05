@@ -7,9 +7,19 @@ module Zensana
     headers 'Content-Type' => 'application/json'
     default_timeout 10
 
-    def initialize(user, pword, subdomain)
-      self.class.base_uri "https://#{subdomain}.zendesk.com/api/v2"
-      self.class.basic_auth user, pword
+    def self.inst
+      @inst ||= new
+    end
+
+    module Access
+      def zendesk_host
+        @zendesk_host ||= Zensana::Zendesk.inst
+      end
+    end
+
+    def initialize
+      self.class.base_uri "https://#{ENV['ZENDESK_DOMAIN']}.zendesk.com/api/v2"
+      self.class.basic_auth ENV['ZENDESK_USERNAME'], ENV['ZENDESK_PASSWORD']
     end
 
     def request(method, path, options={}, &block)
