@@ -27,35 +27,8 @@ module Zensana
 
       Zensana::Error.handle_http_errors result
 
-      Response.new(result).tap do |response|
+      Zensana::Response.new(result).tap do |response|
         block.call(response) if block_given?
-      end
-    end
-
-    class Response
-      def initialize(http_response)
-        @ok   = http_response.success?
-        @data = JSON.parse(http_response.body) rescue {}
-      end
-
-      def ok?
-        @ok
-      end
-
-      def [](key)
-        @data.is_a?(Hash) ? @data[key.to_s] : key.is_a?(Integer) ? @data[key] : nil
-      end
-
-      def each(&block)
-        @data.each(&block)
-      end
-
-      def to_h
-        @data
-      end
-
-      def to_a
-        @data
       end
     end
   end
