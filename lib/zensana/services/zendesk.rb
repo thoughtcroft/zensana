@@ -1,5 +1,4 @@
 require 'httparty'
-require 'json'
 
 module Zensana
   class Zendesk

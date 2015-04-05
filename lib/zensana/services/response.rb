@@ -1,3 +1,5 @@
+require 'json'
+
 module Zensana
   class Response
     def initialize(http_response)
