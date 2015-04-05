@@ -38,7 +38,7 @@ ASANA_USERNAME
 ASANA_PASSWORD
 ```
 
-### ZendDesk
+### ZenDesk
 
 ZenDesk by default requires username / password to connect to the API,
 and the endpoint is defined by the organisation domain name. The following
