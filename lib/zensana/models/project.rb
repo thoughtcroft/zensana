@@ -10,11 +10,13 @@ module Zensana
     end
 
     def fetch(name)
+      reset_attrs
       if name.is_a?(Fixnum)
         fetch_by_id(name)
       else
         fetch_by_name(name)
       end
+
     end
 
     def list
@@ -27,7 +29,13 @@ module Zensana
 
     def tasks
       raise ArgumentError, "Fetch a project first!" unless self.id
-      asana_host.fetch "/projects/#{self.id}/tasks"
+      @tasks ||= begin
+                   list = {}
+                   task_list(self.id).each do |task|
+                     list[task['id']] = Zensana::Task.new(task['id'])
+                   end
+                   list
+                 end
     end
 
     private
@@ -43,6 +51,17 @@ module Zensana
       raise NotFound, "No project matches name '#{name}'"
     rescue RegexpError
       raise RegexpError, "'#{name}' is an invalid regular expression"
+    end
+
+    def task_list(id)
+      asana_host.fetch "/projects/#{id}/tasks"
+    rescue NotFound
+      nil
+    end
+
+    def reset_attrs
+      @attributes = {}
+      @tasks      = {}
     end
   end
 end
