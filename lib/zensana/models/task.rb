@@ -41,11 +41,6 @@ module Zensana
     end
 
     def fetch_stories(id)
-      #list = []
-      #stories_list(id).each do |story|
-        #list << Zensana::Story.new(story['id'])
-      #end
-      #list
       stories_list(id)
     end
 
