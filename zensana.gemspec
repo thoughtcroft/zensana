@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Warren Bain"]
   spec.email         = ["warren@thoughtcroft.com"]
 
-  spec.summary       = %q{Import Asana tasks into ZenDesk}
+  spec.summary       = %q{Convert Asana tasks into ZenDesk tickets}
   spec.description   = <<-EOF
-    Command line tool for taking Asana export JSON and importing into ZenDesk using API
+    Command line tool for sending Asana project tasks into ZenDesk using the Ticket Import API
   EOF
   spec.license       = 'MIT'
 
@@ -19,11 +19,12 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "thor"
+  spec.add_runtime_dependency "httparty"
   spec.add_runtime_dependency "json"
+  spec.add_runtime_dependency "thor"
 
   spec.add_development_dependency "bundler",      "~> 1.8"
+  spec.add_development_dependency "guard-rspec",  "~> 4.3"
   spec.add_development_dependency "rake",         "~> 10.0"
   spec.add_development_dependency "rspec",        "~> 3.1"
-  spec.add_development_dependency "guard-rspec",  "~> 4.3"
 end
