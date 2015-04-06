@@ -4,24 +4,16 @@ module Zensana
 
     attr_reader :attributes
 
-    def initialize(spec=nil)
-      fetch(spec) if spec
+    def self.list
+      @list ||= asana_host.fetch '/projects'
     end
 
-    def fetch(spec)
-      @attributes = if spec.is_a?(Fixnum)
-                      fetch_by_id(spec)
-                    else
-                      fetch_by_name(spec)
-                    end
+    def initialize(spec)
+      @attributes = fetch(spec)
     end
 
     def tasks
       @tasks ||= fetch_tasks(self.id)
-    end
-
-    def list
-      @list ||= asana_host.fetch "/projects"
     end
 
     def method_missing(name, *args, &block)
@@ -29,6 +21,14 @@ module Zensana
     end
 
     private
+
+    def fetch(spec)
+      if spec.is_a?(Fixnum)
+        fetch_by_id(spec)
+      else
+        fetch_by_name(spec)
+      end
+    end
 
     def fetch_by_id(id)
       asana_host.fetch("/projects/#{id}")
