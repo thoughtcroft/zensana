@@ -26,14 +26,18 @@ module Zensana
   end
 
   class AccessDenied < Error
-    self.msg = "Access denied - check credentials"
+    self.msg = 'Access denied - check credentials'
   end
 
-  class Unprocessable < Error
-    self.msg = "Something went wrong in the external service"
+  class BadSearchSpec < Error
+    self.msg = 'That is an invalid regular expression'
   end
 
   class NotFound < Error
-    self.msg = "That item does not exist"
+    self.msg = 'That item does not exist'
+  end
+
+  class Unprocessable < Error
+    self.msg = 'Something went wrong in the external service'
   end
 end
