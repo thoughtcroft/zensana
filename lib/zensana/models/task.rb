@@ -13,7 +13,7 @@ module Zensana
     end
 
     def stories
-      @stories ||= fetch_stories(self.id)
+      @stories ||= stories_list(self.id)
     end
 
     def method_missing(name, *args, &block)
@@ -34,10 +34,6 @@ module Zensana
       asana_host.fetch "/tasks/#{id}/subtasks"
     rescue NotFound
       nil
-    end
-
-    def fetch_stories(id)
-      stories_list(id)
     end
 
     def stories_list(id)
