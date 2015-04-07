@@ -3,11 +3,13 @@ module Zensana
     class Project
       include Zensana::Asana::Access
 
-      attr_reader :attributes
-
       def self.list
-        @list ||= Zensana::Asana.inst.fetch '/projects'
+        # NOTE: this is a class variable so the list
+        # is calculated only once for all instances
+        @@list ||= Zensana::Asana.inst.fetch '/projects'
       end
+
+      attr_reader :attributes
 
       def initialize(spec)
         @attributes = fetch(spec)
@@ -36,7 +38,7 @@ module Zensana
       end
 
       def fetch_by_name(name)
-        list.each do |project|
+        self.class.list.each do |project|
           return fetch_by_id(project['id']) if project['name'] =~ %r{#{name}}
         end
         raise NotFound, "No project matches name '#{name}'"
