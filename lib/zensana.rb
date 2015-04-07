@@ -5,9 +5,10 @@ require 'zensana/services/asana'
 require 'zensana/services/error'
 require 'zensana/services/response'
 require 'zensana/services/zendesk'
-require 'zensana/models/project'
-require 'zensana/models/task'
+require 'zensana/models/asana/project'
+require 'zensana/models/asana/task'
+require 'zensana/models/zendesk/user'
 
 module Zensana
-  # your code goes here
+  # the code has achieved a state of zensana
 end

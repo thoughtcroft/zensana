@@ -11,8 +11,8 @@ module Zensana
     end
 
     module Access
-      def zendesk_host
-        @zendesk_host ||= Zensana::Zendesk.inst
+      def zendesk_service
+        @zendesk_service ||= Zensana::Zendesk.inst
       end
     end
 
@@ -21,7 +21,12 @@ module Zensana
       self.class.basic_auth ENV['ZENDESK_USERNAME'], ENV['ZENDESK_PASSWORD']
     end
 
+    def fetch(path, options={}, &block)
+      request :get, path, options, &block
+    end
+
     def request(method, path, options={}, &block)
+      path = "#{path}.json" unless path.include?('json')
       result = self.class.send(method, path, options)
 
       Zensana::Error.handle_http_errors result

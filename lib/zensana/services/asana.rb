@@ -12,8 +12,8 @@ module Zensana
     end
 
     module Access
-      def asana_host
-        @asana_host ||= Zensana::Asana.inst
+      def asana_service
+        @asana_service ||= Zensana::Asana.inst
       end
     end
 
