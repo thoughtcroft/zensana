@@ -47,7 +47,7 @@ module Zensana
       end
 
       def fetch_tasks(id)
-        task_list(id).map { |t| Zensana::Task.new(t['id']) }
+        task_list(id).map { |t| Zensana::Asana::Task.new(t['id']) }
       end
 
       def task_list(id)
