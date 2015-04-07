@@ -3,7 +3,7 @@ require 'httparty'
 module Zensana
   class Zendesk
     include HTTParty
-    headers 'Content-Type' => 'application/json'
+    headers 'Content-Type' => 'application/json; charset=utf-8'
     default_timeout 10
 
     def self.inst
@@ -26,7 +26,7 @@ module Zensana
     end
 
     def request(method, path, options={}, &block)
-      path = "#{path}.json" unless path.include?('json')
+      path = relative_path(path)
       result = self.class.send(method, path, options)
 
       Zensana::Error.handle_http_errors result
@@ -34,6 +34,12 @@ module Zensana
       Zensana::Response.new(result).tap do |response|
         block.call(response) if block_given?
       end
+    end
+
+    private
+
+    def relative_path(path)
+      path.sub(self.class.base_uri, '')
     end
   end
 end

@@ -18,6 +18,14 @@ module Zensana
       @ok
     end
 
+    def has_more_pages?
+      !! next_page
+    end
+
+    def next_page
+      @data['next_page']
+    end
+
     def [](key)
       @data.is_a?(Hash) ? @data[key.to_s] : key.is_a?(Integer) ? @data[key] : nil
     end

@@ -4,7 +4,7 @@ module Zensana
   class Asana
     include HTTParty
     base_uri 'https://app.asana.com/api/1.0'
-    headers 'Content-Type' => 'application/json'
+    headers 'Content-Type' => 'application/json; charset=utf-8'
     default_timeout 10
 
     def self.inst
