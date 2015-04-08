@@ -9,6 +9,10 @@ module Zensana
         @attributes = fetch(id)
       end
 
+      def is_section?
+        self.name.end_with?(':') rescue false
+      end
+
       def subtasks
         @subtasks ||= fetch_subtasks(self.id)
       end
