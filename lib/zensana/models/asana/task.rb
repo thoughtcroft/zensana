@@ -14,7 +14,11 @@ module Zensana
       end
 
       def stories
-        @stories ||= stories_list(self.id)
+        @stories ||= story_list(self.id)
+      end
+
+      def attachments
+        @attachments ||= fetch_attachments(self.id)
       end
 
       def method_missing(name, *args, &block)
@@ -37,7 +41,17 @@ module Zensana
         nil
       end
 
-      def stories_list(id)
+      def fetch_attachments(id)
+        attachment_list(id).map { |s| Zensana::Asana::Attachment.new(s['id']) }
+      end
+
+      def attachment_list(id)
+        asana_service.fetch "/tasks/#{id}/attachments"
+      rescue NotFound
+        nil
+      end
+
+      def story_list(id)
         asana_service.fetch "/tasks/#{id}/stories"
       rescue NotFound
         nil

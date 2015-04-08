@@ -7,6 +7,7 @@ require 'zensana/services/error'
 require 'zensana/services/response'
 require 'zensana/services/zendesk'
 
+require 'zensana/models/asana/attachment'
 require 'zensana/models/asana/project'
 require 'zensana/models/asana/task'
 require 'zensana/models/asana/user'
