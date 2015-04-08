@@ -25,6 +25,10 @@ module Zensana
       request :get, path, options, &block
     end
 
+    def create(path, options={}, &block)
+      request :post, path, options, &block
+    end
+
     def request(method, path, options={}, &block)
       path = relative_path(path)
       result = self.class.send(method, path, options)

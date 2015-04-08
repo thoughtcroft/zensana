@@ -43,7 +43,7 @@ module Zensana
         end
         raise NotFound, "No project matches name '#{name}'"
       rescue RegexpError
-        raise BadSearchSpec, "'#{name}' is not a valid regular expression"
+        raise BadSearch, "'#{name}' is not a valid regular expression"
       end
 
       def fetch_tasks(id)

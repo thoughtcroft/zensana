@@ -1,3 +1,5 @@
+require 'json'
+
 module Zensana
   class Zendesk
     class User
@@ -20,8 +22,20 @@ module Zensana
 
       attr_reader :attributes
 
-      def initialize(spec)
+      def initialize(attributes={})
+        @attributes = attributes
+      end
+
+      def find(spec)
         @attributes = fetch(spec)
+      end
+
+      def create(attributes)
+        name = attributes['name'] || attributes['user']['name']
+        id   = id_from_list(name, false)
+        raise AlreadyExists, "User '#{name}' already exists" if id
+        @@list << @attributes = create_user(attributes)
+        @attributes
       end
 
       def method_missing(name, *args, &block)
@@ -32,9 +46,9 @@ module Zensana
 
       def fetch(spec)
         if spec.is_a?(Fixnum)
-          fetch_by_id(spec)
+          fetch_by_id spec
         else
-          fetch_by_name(spec)
+          fetch_by_name spec
         end
       end
 
@@ -43,12 +57,29 @@ module Zensana
       end
 
       def fetch_by_name(name)
+        id = id_from_list(name)
+        raise NotFound, "No user matches name '#{name}'" unless id
+        fetch_by_id id
+      end
+
+      def id_from_list(name, fuzzy=true)
+        name_id = nil
         self.class.list.each do |user|
-          return fetch_by_id(user['id']) if user['name'] =~ %r{#{name}}
+          if user['name'] == name || ( fuzzy && user['name'] =~ %r{#{name}} )
+            name_id = user['id']
+            break
+          end
         end
-        raise NotFound, "No user matches name '#{name}'"
+        name_id
       rescue RegexpError
-        raise BadSearchSpec, "'#{name}' is not a valid regular expression"
+        raise BadSearch, "'#{name}' is not a valid regular expression"
+      end
+
+      def create_user(attributes)
+        unless attributes['user'].is_a?(Hash)
+          attributes = { 'user' => attributes }
+        end
+        zendesk_service.create("/users.json", :body => JSON.generate(attributes))['user']
       end
     end
   end

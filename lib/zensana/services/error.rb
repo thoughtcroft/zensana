@@ -17,7 +17,7 @@ module Zensana
     def self.handle_http_errors(http_response)
       message = JSON.parse(http_response.body)['errors'].first['message'] rescue nil
       case http_response.code
-      when 200 then return
+      when 200, 201 then return
       when 404 then raise NotFound, message
       when 401..403 then raise AccessDenied, message
       else raise Unprocessable, message
@@ -29,7 +29,11 @@ module Zensana
     self.msg = 'Access denied - check credentials'
   end
 
-  class BadSearchSpec < Error
+  class AlreadyExists < Error
+    self.msg = 'That item already exists'
+  end
+
+  class BadSearch < Error
     self.msg = 'That is an invalid regular expression'
   end
 
