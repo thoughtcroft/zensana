@@ -16,8 +16,15 @@ module Zensana
     end
 
     def self.handle_http_errors(http_response)
-      binding.pry
-      message = JSON.parse(http_response.body)['errors'].first['message'] rescue nil
+      body = JSON.parse(http_response.body)
+      message = if body['errors']
+                  body['errors'].first['message']
+                else
+                  body
+                end
+    rescue
+      nil
+    ensure
       case http_response.code
       when 200, 201 then return
       when 404 then raise NotFound, message
