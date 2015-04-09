@@ -1,10 +1,10 @@
-require 'httparty'
+require 'httmultiparty'
 
 module Zensana
   class Zendesk
-    include HTTParty
-    headers 'Content-Type' => 'application/json; charset=utf-8'
+    include HTTMultiParty
     default_timeout 10
+    debug_output
 
     def self.inst
       @inst ||= new
@@ -30,6 +30,11 @@ module Zensana
     end
 
     def request(method, path, options={}, &block)
+      unless options[:headers]
+        options[:headers] = {
+          "Content-Type" => "application/binary"
+        }
+      end
       path = relative_path(path)
       result = self.class.send(method, path, options)
 

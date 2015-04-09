@@ -1,8 +1,8 @@
-require 'httparty'
+require 'httmultiparty'
 
 module Zensana
   class Asana
-    include HTTParty
+    include HTTMultiParty
     base_uri 'https://app.asana.com/api/1.0'
     headers 'Content-Type' => 'application/json; charset=utf-8'
     default_timeout 10
