@@ -4,7 +4,7 @@ module Zensana
   class Zendesk
     include HTTMultiParty
     default_timeout 10
-    debug_output
+    #debug_output
 
     def self.inst
       @inst ||= new
