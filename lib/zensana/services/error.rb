@@ -1,4 +1,5 @@
 require 'json'
+require 'pry'
 
 module Zensana
   class Error < StandardError
@@ -15,6 +16,7 @@ module Zensana
     end
 
     def self.handle_http_errors(http_response)
+      binding.pry
       message = JSON.parse(http_response.body)['errors'].first['message'] rescue nil
       case http_response.code
       when 200, 201 then return
