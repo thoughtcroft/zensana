@@ -22,20 +22,22 @@ module Zensana
 
       attr_reader :attributes
 
-      def initialize(attributes={})
-        @attributes = attributes
+      def initialize
+        @attributes = {}
       end
 
       def find(spec)
-        @attributes = fetch(spec)
+        @attributes = lookup(spec)
       end
 
       def create(attributes)
         name = attributes['name'] || attributes['user']['name']
-        id   = id_from_list(name, false)
-        raise AlreadyExists, "User '#{name}' already exists" if id
-        @@list << @attributes = create_user(attributes)
-        @attributes
+        raise AlreadyExists, "User '#{name}' already exists" if lookup_by_name(name, false)
+      rescue NotFound
+        @attributes = {}.tap do |user|
+          user.merge! create_user(attributes)
+          update_cache user
+        end
       end
 
       def method_missing(name, *args, &block)
@@ -44,33 +46,34 @@ module Zensana
 
       private
 
-      def fetch(spec)
+      def lookup(spec)
         if spec.is_a?(Fixnum)
-          fetch_by_id spec
+          lookup_by_id spec
         else
-          fetch_by_name spec
+          lookup_by_name spec
         end
       end
 
-      def fetch_by_id(id)
-        zendesk_service.fetch("/users/#{id}.json")['user']
-      end
-
-      def fetch_by_name(name)
-        id = id_from_list(name)
-        raise NotFound, "No user matches name '#{name}'" unless id
-        fetch_by_id id
-      end
-
-      def id_from_list(name, fuzzy=true)
-        name_id = nil
-        self.class.list.each do |user|
-          if user['name'] == name || ( fuzzy && user['name'] =~ %r{#{name}} )
-            name_id = user['id']
-            break
+      def lookup_by_id(id)
+        cache.each do |user|
+          if user['id'] == id
+            return user
           end
         end
-        name_id
+
+        {}.tap do |user|
+          user.merge! fetch(id)
+          update_cache user
+        end
+      end
+
+      def lookup_by_name(name, fuzzy=true)
+        cache.each do |user|
+          if user['name'] == name || ( fuzzy && user['name'] =~ %r{#{name}} )
+            return user
+          end
+        end
+        raise NotFound, "No user matches name '#{name}'"
       rescue RegexpError
         raise BadSearch, "'#{name}' is not a valid regular expression"
       end
@@ -80,6 +83,18 @@ module Zensana
           attributes = { 'user' => attributes }
         end
         zendesk_service.create("/users.json", :body => JSON.generate(attributes))['user']
+      end
+
+      def cache
+        self.class.list
+      end
+
+      def update_cache(user)
+        cache << user
+      end
+
+      def fetch(id)
+        zendesk_service.fetch("/users/#{id}.json")['user']
       end
     end
   end
