@@ -31,8 +31,8 @@ module Zensana
       end
 
       def create(attributes)
-        name = attributes['name'] || attributes['user']['name']
-        raise AlreadyExists, "User '#{name}' already exists" if lookup_by_name(name, false)
+        email = attributes['email'] || attributes['user']['email']
+        raise AlreadyExists, "User '#{email}' already exists" if lookup_by_email(email)
       rescue NotFound
         @attributes = {}.tap do |user|
           user.merge! create_user(attributes)
@@ -50,7 +50,7 @@ module Zensana
         if spec.is_a?(Fixnum)
           lookup_by_id spec
         else
-          lookup_by_name spec
+          lookup_by_email spec
         end
       end
 
@@ -67,15 +67,13 @@ module Zensana
         end
       end
 
-      def lookup_by_name(name, fuzzy=true)
+      def lookup_by_email(email)
         cache.each do |user|
-          if user['name'] == name || ( fuzzy && user['name'] =~ %r{#{name}} )
+          if user['email'] == email
             return user
           end
         end
-        raise NotFound, "No user matches name '#{name}'"
-      rescue RegexpError
-        raise BadSearch, "'#{name}' is not a valid regular expression"
+        raise NotFound, "No user matches email '#{email}'"
       end
 
       def create_user(attributes)
