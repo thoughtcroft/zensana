@@ -4,7 +4,7 @@ module Zensana
   class Zendesk
     include HTTMultiParty
     default_timeout 10
-    #debug_output
+    debug_output
 
     def self.inst
       @inst ||= new
@@ -32,7 +32,7 @@ module Zensana
     def request(method, path, options={}, &block)
       unless options[:headers]
         options[:headers] = {
-          "Content-Type" => "application/binary"
+          "Content-Type" => "application/json"
         }
       end
       path = relative_path(path)

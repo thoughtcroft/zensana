@@ -80,7 +80,10 @@ module Zensana
         unless attributes['user'].is_a?(Hash)
           attributes = { 'user' => attributes }
         end
-        zendesk_service.create("/users.json", :body => JSON.generate(attributes))['user']
+        zendesk_service.create(
+          "/users.json",
+          :body => JSON.generate(attributes)
+        )['user']
       end
 
       def cache
