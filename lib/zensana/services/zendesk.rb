@@ -21,22 +21,22 @@ module Zensana
       self.class.basic_auth ENV['ZENDESK_USERNAME'], ENV['ZENDESK_PASSWORD']
     end
 
-    def fetch(path, options={}, &block)
-      request :get, path, options, &block
+    def fetch(path, params={}, &block)
+      request :get, path, params, &block
     end
 
-    def create(path, options={}, &block)
-      request :post, path, options, &block
+    def create(path, params={}, &block)
+      request :post, path, params, &block
     end
 
-    def request(method, path, options={}, &block)
-      unless options[:headers]
-        options[:headers] = {
+    def request(method, path, params={}, &block)
+      unless params[:headers]
+        params[:headers] = {
           "Content-Type" => "application/json"
         }
       end
       path = relative_path(path)
-      result = self.class.send(method, path, options)
+      result = self.class.send(method, path, params)
 
       Zensana::Error.handle_http_errors result
 

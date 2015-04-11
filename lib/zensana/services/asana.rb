@@ -26,12 +26,12 @@ module Zensana
       self.class.basic_auth user, pword
     end
 
-    def fetch(path, options={}, &block)
-      request :get, path, options, &block
+    def fetch(path, params={}, &block)
+      request :get, path, params, &block
     end
 
-    def request(method, path, options={}, &block)
-      result = self.class.send(method, path, options)
+    def request(method, path, params={}, &block)
+      result = self.class.send(method, path, params)
 
       Zensana::Error.handle_http_errors result
 
