@@ -21,11 +21,11 @@ module Zensana
       end
 
       def valid_keys
-        @@valid_keys ||= required_keys + optional_keys
+        @valid_keys ||= required_keys + optional_keys
       end
 
       def required_keys
-        @@required_keys ||= begin
+        @required_keys ||= begin
                              const = "#{self.class}::REQUIRED_KEYS"
                              Object.const_get const
                            rescue NameError
@@ -34,7 +34,7 @@ module Zensana
       end
 
       def optional_keys
-        @@optional_keys ||= begin
+        @optional_keys ||= begin
                              const = "#{self.class}::OPTIONAL_KEYS"
                              Object.const_get const
                            rescue NameError
