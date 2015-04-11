@@ -9,6 +9,12 @@ module Zensana
         @@list ||= Zensana::Asana.inst.fetch '/projects'
       end
 
+      def self.search(name)
+        self.class.list.collect { |p| p['name'] =~ %r{#{name}} }
+      rescue RegexpError
+        raise BadSearch, "'#{name}' is not a valid regular expression"
+      end
+
       attr_reader :attributes
 
       def initialize(spec)
