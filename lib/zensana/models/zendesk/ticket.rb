@@ -4,6 +4,12 @@ module Zensana
   class Zendesk
     class Ticket
       include Zensana::Zendesk::Access
+      include Zensana::Validate::Key
+
+      REQUIRED_KEYS = [ :requester_id ]
+      OPTIONAL_KEYS = [ :external_id, :type, :subject, :description, :priority, :status,
+                        :submitter_id, :assignee_id, :group_id, :collaborator_ids, :tags,
+                        :created_ai, :updated_id, :comments, :solved_at, :updated_at  ]
 
       attr_reader :attributes
 
@@ -16,6 +22,7 @@ module Zensana
       end
 
       def import(attributes=@attributes)
+        validate_keys attributes
         raise AlreadyExists, "This ticket has already been imported with id #{self.id}" if imported?
         import_ticket(attributes)
       end

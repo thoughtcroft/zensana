@@ -4,6 +4,10 @@ module Zensana
   class Zendesk
     class User
       include Zensana::Zendesk::Access
+      include Zensana::Validate::Key
+
+      REQUIRED_KEYS = [ :name, :email ]
+      OPTIONAL_KEYS = [ :time_zone, :locale_id, :organization_id, :role, :verified, :phone, :photo ]
 
       def self.list
         # NOTE: this is a class variable so the list
@@ -31,6 +35,7 @@ module Zensana
       end
 
       def create(attributes)
+        validate_keys attributes
         email = attributes['email'] || attributes['user']['email']
         raise AlreadyExists, "User '#{email}' already exists" if lookup_by_email(email)
       rescue NotFound
