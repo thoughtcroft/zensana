@@ -3,16 +3,18 @@ module Zensana
     class Project
       include Zensana::Asana::Access
 
-      def self.list
-        # NOTE: this is a class variable so the list
-        # is calculated only once for all instances
-        @@list ||= Zensana::Asana.inst.fetch '/projects'
-      end
+      class << self
+        def list
+          # NOTE: this is a class variable so the list
+          # is calculated only once for all instances
+          @@list ||= Zensana::Asana.inst.fetch '/projects'
+        end
 
-      def self.search(name)
-        self.class.list.collect { |p| p['name'] =~ %r{#{name}} }
-      rescue RegexpError
-        raise BadSearch, "'#{name}' is not a valid regular expression"
+        def search(name)
+          list.select { |p| p['name'] =~ %r{#{name}} }
+        rescue RegexpError
+          raise BadSearch, "'#{name}' is not a valid regular expression"
+        end
       end
 
       attr_reader :attributes
