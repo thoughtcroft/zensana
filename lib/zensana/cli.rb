@@ -1,10 +1,8 @@
-require 'thor'
-
 module Zensana
-  class Cli < Thor
+  class Cli < Zensana::Command
 
     desc 'project SUBCOMMAND', 'perform actions on Asana projects'
-    subcommand 'project', Zensana::Command::Project
+    subcommand 'project', Project
 
   end
 end
