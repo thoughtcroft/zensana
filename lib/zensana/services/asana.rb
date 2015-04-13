@@ -38,6 +38,9 @@ module Zensana
       Zensana::Response.new(result).tap do |response|
         block.call(response) if block_given?
       end
+
+    rescue Net::OpenTimeout
+      raise Unprocessable, "Connection timed out"
     end
 
   end

@@ -1,4 +1,4 @@
-require 'json'
+require 'awesome_print'
 
 module Zensana
   class Response
@@ -39,7 +39,7 @@ module Zensana
     end
 
     def to_s
-      JSON.pretty_generate @data rescue @data.inspect
+      ap @data
     end
   end
 end

@@ -4,16 +4,15 @@ module Zensana
       include Zensana::Asana::Access
 
       class << self
+
         def list
-          # NOTE: this is a class variable so the list
-          # is calculated only once for all instances
           @@list ||= Zensana::Asana.inst.fetch '/projects'
         end
 
-        def search(name)
-          list.select { |p| p['name'] =~ %r{#{name}} }
+        def search(spec)
+          list.select { |p| p.to_s =~ %r{#{spec}} }
         rescue RegexpError
-          raise BadSearch, "'#{name}' is not a valid regular expression"
+          raise BadSearch, "'#{spec}' is not a valid regular expression"
         end
       end
 
@@ -23,8 +22,12 @@ module Zensana
         @attributes = fetch(spec)
       end
 
-      def tasks
-        @tasks ||= fetch_tasks(self.id)
+      def task_list
+        @task_list ||= project_tasks
+      end
+
+      def full_tasks
+        @full_tasks ||= fetch_project_tasks
       end
 
       def method_missing(name, *args, &block)
@@ -33,8 +36,16 @@ module Zensana
 
       private
 
+      def list
+        self.class.list
+      end
+
+      def id
+        self.id
+      end
+
       def fetch(spec)
-        if spec.is_a?(Fixnum)
+        if is_integer?(spec)
           fetch_by_id(spec)
         else
           fetch_by_name(spec)
@@ -42,11 +53,11 @@ module Zensana
       end
 
       def fetch_by_id(id)
-        asana_service.fetch("/projects/#{id}")
+        asana_service.fetch "/projects/#{id}"
       end
 
       def fetch_by_name(name)
-        self.class.list.each do |project|
+        list.each do |project|
           return fetch_by_id(project['id']) if project['name'] =~ %r{#{name}}
         end
         raise NotFound, "No project matches name '#{name}'"
@@ -54,15 +65,20 @@ module Zensana
         raise BadSearch, "'#{name}' is not a valid regular expression"
       end
 
-      def fetch_tasks(id)
-        task_list(id).map { |t| Zensana::Asana::Task.new(t['id']) }
+      def fetch_project_tasks
+        task_list.map { |t| Zensana::Asana::Task.new(t['id']) }
       end
 
-      def task_list(id)
+      def project_tasks
         asana_service.fetch "/projects/#{id}/tasks"
       rescue NotFound
-        nil
+        []
       end
+
+      def is_integer?(id)
+        Integer(id) rescue false
+      end
+
     end
   end
 end

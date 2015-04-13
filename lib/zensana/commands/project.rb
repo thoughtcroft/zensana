@@ -1,18 +1,31 @@
 module Zensana
   class Command::Project < Zensana::Command
 
-    desc 'find NAME', 'list projects that match NAME (regular expression supported)'
+    desc 'find REGEXP', 'List projects that match REGEXP'
     def find(name)
-      results = Zensana::Asana::Project.search(name).collect do |project|
-        project['name']
-      end
-      puts results.sort
+      puts Zensana::Asana::Project.search(name).collect { |p| p['name'] }.sort
     end
 
-    desc 'convert PROJECT', 'convert PROJECT tasks to ZenDesk tickets (by ID or NAME)'
+    desc 'convert PROJECT', 'Convert PROJECT tasks to ZenDesk tickets (by ID or NAME)'
     def convert(project)
+      say "This task will convert Asana project #{project} into ZenDesk tickets"
+    end
+
+    desc 'show PROJECT', 'Display details of PROJECT (choosing from list matching)'
+    def show(project)
       candidates = Zensana::Asana::Project.search(project)
-      puts select_project(candidates)
+
+      if candidates.empty?
+        say "\nNo project found matching '#{project}'", :red
+      else
+        result = select_project(candidates)
+        candidate = Zensana::Asana::Project.new(result)
+        puts candidate.attributes
+
+        if yes? "\nShow first level task summary?", :yellow
+          puts candidate.task_list
+        end
+      end
     end
 
     private
