@@ -3,6 +3,11 @@ module Zensana
     class Task
       include Zensana::Asana::Access
 
+      FIELDS = [
+        :id, :name, :created_at, :created_by,
+        :completed, :assignee, :tags, :followers
+      ]
+
       attr_reader :attributes
 
       def initialize(id)
@@ -11,6 +16,10 @@ module Zensana
 
       def is_section?
         self.name.end_with?(':') rescue false
+      end
+
+      def section_name
+        self.name.chop if is_section?
       end
 
       def subtasks
@@ -32,7 +41,7 @@ module Zensana
       private
 
       def fetch(id)
-        asana_service.fetch("/tasks/#{id}")
+        asana_service.fetch("/tasks/#{id}?opt_fields=#{opt_fields}")
       end
 
       def fetch_subtasks(id)
@@ -59,6 +68,10 @@ module Zensana
         asana_service.fetch "/tasks/#{id}/stories"
       rescue NotFound
         nil
+      end
+
+      def opt_fields
+        FIELDS.map { |f| f.to_s }.join(',')
       end
     end
   end

@@ -7,9 +7,11 @@ module Zensana
       include Zensana::Validate::Key
 
       REQUIRED_KEYS = [ :requester_id ]
-      OPTIONAL_KEYS = [ :external_id, :type, :subject, :description, :priority, :status,
-                        :submitter_id, :assignee_id, :group_id, :collaborator_ids, :tags,
-                        :created_ai, :updated_id, :comments, :solved_at, :updated_at  ]
+      OPTIONAL_KEYS = [
+        :external_id, :type, :subject, :description, :priority, :status,
+        :submitter_id, :assignee_id, :group_id, :collaborator_ids, :tags,
+        :created_at, :updated_id, :comments, :solved_at, :updated_at
+      ]
 
       attr_reader :attributes
 

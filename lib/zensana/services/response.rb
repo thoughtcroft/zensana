@@ -39,6 +39,10 @@ module Zensana
     end
 
     def to_s
+      @data.respond_to?('to_s') ? @data.to_s : @data
+    end
+
+    def pretty
       ap @data
     end
   end
