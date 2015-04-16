@@ -115,7 +115,8 @@ using options #{options}
       # and the same is true of tasks already created
       if task.is_section?
         say "\nProcessing section: #{task.section_name} "
-        section_tags = task.tags << snake_case(task.section_name)
+        section_tags.pop
+        section_tags.push task.tags << snake_case(task.section_name)
       else
         say "\nProcessing task: #{task.name} "
         project_tags.push snake_case(task.tags)
@@ -191,11 +192,10 @@ using options #{options}
         task.subtasks.each do |sub|
           task_to_ticket Zensana::Asana::Task.new(sub.attributes['id']), project_tags, sub_section_tags
         end
-      end
 
-      # this task's tags are now no longer required
-      # section tags remian until another section at this level
-      project_tags.pop
+        # this task's tags are now no longer required
+        project_tags.pop
+      end
     end
 
     # lookup up asana user on zendesk and
