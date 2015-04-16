@@ -6,7 +6,15 @@ module Zensana
       include Zensana::Zendesk::Access
       include Zensana::Validate::Key
 
-      REQUIRED_KEYS = [ :requester_id ]
+      # if external_id is present for a ticket in
+      # ZenDesk then we can say that it was already created
+      def self.external_id_exists?(external_id)
+        query = "/search.json?query=type:ticket,,external_id:#{external_id}"
+        external_id && (result = Zensana::Zendesk.inst.fetch(query)['results']) &&
+          ! (result.nil? || result.empty?)
+      end
+
+      REQUIRED_KEYS = [:requester_id ]
       OPTIONAL_KEYS = [
         :external_id, :type, :subject, :description, :priority, :status,
         :submitter_id, :assignee_id, :group_id, :collaborator_ids, :tags,
@@ -35,6 +43,10 @@ module Zensana
 
       def id
         attributes['id']
+      end
+
+      def external_id
+        attributes['external_id']
       end
 
       def method_missing(name, *args, &block)

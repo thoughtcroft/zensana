@@ -4,7 +4,7 @@ module Zensana
       include Zensana::Validate::Key
 
       REQUIRED_KEYS = [ :author_id, :value ]
-      OPTIONAL_KEYS = [ :public, :attachments, :created_at ]
+      OPTIONAL_KEYS = [ :created_at, :public, :uploads ]
 
       # Class validates the comment attributes
       # added during the Ticket Import call.

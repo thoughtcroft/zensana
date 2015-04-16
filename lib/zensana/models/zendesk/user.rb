@@ -9,21 +9,6 @@ module Zensana
       REQUIRED_KEYS = [ :name, :email ]
       OPTIONAL_KEYS = [ :time_zone, :locale_id, :organization_id, :role, :verified, :phone, :photo ]
 
-      def self.list
-        # NOTE: this is a class variable so the list
-        # is calculated only once for all instances
-        @@list ||= [].tap do |users|
-          service = Zensana::Zendesk.inst
-          service.fetch('/users.json') do |response|
-            while true
-              users.concat response['users']
-              break unless response.has_more_pages?
-              response = service.fetch(response.next_page)
-            end
-          end
-        end
-      end
-
       attr_reader :attributes
 
       def initialize
@@ -39,10 +24,9 @@ module Zensana
         email = attributes['email'] || attributes['user']['email']
         raise AlreadyExists, "User '#{email}' already exists" if lookup_by_email(email)
       rescue NotFound
-        @attributes = {}.tap do |user|
-          user.merge! create_user(attributes)
-          update_cache user
-        end
+        user = create_user(attributes)
+        update_cache user
+        @attributes = user
       end
 
       def method_missing(name, *args, &block)
@@ -60,25 +44,19 @@ module Zensana
       end
 
       def lookup_by_id(id)
-        cache.each do |user|
-          if user['id'] == id
-            return user
-          end
-        end
-
-        {}.tap do |user|
-          user.merge! fetch(id)
+        unless (user = read_cache(id))
+          user = fetch(id)
           update_cache user
         end
+        user
       end
 
       def lookup_by_email(email)
-        cache.each do |user|
-          if user['email'] == email
-            return user
-          end
+        unless (user = read_cache(email))
+          user = search("email:#{email}")
+          update_cache user
         end
-        raise NotFound, "No user matches email '#{email}'"
+        user
       end
 
       def create_user(attributes)
@@ -92,15 +70,26 @@ module Zensana
       end
 
       def cache
-        self.class.list
+        @@cache ||= {}
+      end
+
+      def read_cache(key)
+        cache[key.to_s]
       end
 
       def update_cache(user)
-        cache << user
+        [ :id, :email ].each do |attr|
+          key = user[attr].to_s
+          cache[key] = user
+        end
       end
 
       def fetch(id)
         zendesk_service.fetch("/users/#{id}.json")['user']
+      end
+
+      def search(query)
+        zendesk_service.fetch("/users/search.json?query=#{query}")['users'].first
       end
     end
   end

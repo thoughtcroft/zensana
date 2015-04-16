@@ -1,3 +1,5 @@
+require 'pry'
+
 module Zensana
   class Asana
     class Attachment
@@ -5,12 +7,8 @@ module Zensana
 
       attr_reader :attributes
 
-      def initialize
-        @attributes = {}
-      end
-
-      def find(id)
-        fetch(id) unless self.id == id
+      def initialize(id)
+        @attributes = fetch(id)
       end
 
       def download
@@ -27,7 +25,7 @@ module Zensana
       end
 
       def full_path
-        File.join(file_dir, self.name)
+        File.join(file_dir, attributes['name'])
       end
 
       def method_missing(name, *args, &block)
@@ -45,7 +43,7 @@ module Zensana
       end
 
       def parent
-        self.parent['id']
+        attributes['parent']['id'].to_s
       end
 
       def fetch(id)

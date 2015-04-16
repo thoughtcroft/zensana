@@ -32,17 +32,17 @@ module Zensana
     option :attachments,  type: 'boolean', aliases: '-a', default: true,  desc: 'download and upload any attachments'
     option :completed,    type: 'boolean', aliases: '-c', default: false, desc: 'include tasks that are completed'
     option :default_user, type: 'string',  aliases: '-u', default: nil,   desc: 'set a default user to assign to tickets'
-    option :followers,    type: 'boolean', aliases: '-f', default: false, desc: 'add followers of tasks to tickets'
+#    option :followers,    type: 'boolean', aliases: '-f', default: false, desc: 'add followers of tasks to tickets'
     option :stories,      type: 'boolean', aliases: '-s', default: true,  desc: 'import stories as comments'
     option :verified,     type: 'boolean', aliases: '-v', default: true,  desc: '`false` will send email to zendesk users created'
     def convert(project)
-      asana_project = Zensana::Asana::Project.new(project)
+      @asana_project = Zensana::Asana::Project.new(project)
       say <<-BANNER
 
 This will convert the following Asana project into ZenDesk:
 
-     id: #{asana_project.id}
-   name: #{asana_project.name}
+     id: #{@asana_project.id}
+   name: #{@asana_project.name}
 
 using options #{options}
 
@@ -54,12 +54,23 @@ using options #{options}
       end
 
       # LIFO tags for recursive tagging
-      tags = [ asana_project.tags << 'asana' ]
+      #
+      # `project_tag_list` holds the project tags
+      # and also the tags for the current task and
+      # its parent tasks which are all added to the ticket
+      #
+      # `section_tag_list` holds the tags for the last
+      # section task which are also added to tickets
+      #
+      tags = [ 'zensana', 'imported' ]
+      tags.concat @asana_project.attributes[:tags] if @asana_project.attributes[:tags]
+      project_tags = Array(tags)
+      section_tags = []
 
-      asana_project.full_tasks.each do |task|
-        task_to_ticket tasks, tags
+      @asana_project.full_tasks.each do |task|
+        task_to_ticket task, project_tags, section_tags
       end
-      say "\nFinished!", :green
+      say "\n\n ---> Finished!\n\n", :green
     end
 
     private
@@ -93,94 +104,100 @@ using options #{options}
     end
 
     # convert and asana task into a zendesk ticket
-    # calls itself recursively for sub-tasks
+    # calls itself recursively for subtasks
     #
-    def task_to_ticket(task, tag_list=[] )
-      if task['completed'] && !options[:completed]
-        say "Skipping completed task #{task.name}!", :yellow
+    def task_to_ticket(task, project_tags, section_tags )
+      if task.attributes['completed'] && !options[:completed]
+        say "\nSkipping completed task: #{task.name}! ", :yellow
         return
       end
-      say "Processing task #{task.name} ..."
-
-      # add task tags to the list
-      tags = task.tags
-      tags << task.section_name if task.is_section?
-      tag_list.push tags
 
       # sections contribute their tags and any
-      # sub-tasks but no other processing by design
-      unless task.is_section?
-        requester = asana_to_zendesk_user(task.created_by, true)
+      # subtasks but no other processing by design
+      # and the same is true of tasks already created
+      if task.is_section?
+        say "\nProcessing section: #{task.section_name} "
+        section_tags = task.tags << snake_case(task.section_name)
+      else
+        say "\nProcessing task: #{task.name} "
+        project_tags.push task.tags
 
-        # create comments from the task's stories
-        if options[:stories]
+        if Zensana::Zendesk::Ticket.external_id_exists?(task.id)
+          say "\n >>> skip ticket creation, task already imported ", :yellow
+        else
+          requester = asana_to_zendesk_user(task.created_by, true)
 
-          comments = [].tap do |c|
+          # create comments from the task's stories
+          if options[:stories]
+
+            comments = []
             task.stories.each do |story|
-              if story[:type] == 'comment' &&
-                  (author = asana_to_zendesk_user(story[:created_by], true))
-                c << Zensana::Zendesk::Comment.new(
+              if story['type'] == 'comment' &&
+                  (author = asana_to_zendesk_user(story['created_by'], true))
+                comments << Zensana::Zendesk::Comment.new(
                   :author_id  => author.id,
-                  :value      => story[:text],
-                  :created_at => story[:created_at],
+                  :value      => story['text'],
+                  :created_at => story['created_at'],
                   :public     => true
+                ).attributes
+              end
+            end
+
+            # process attachments on this task
+            if options[:attachments]
+              download_attachments task.attachments
+              if tokens = upload_attachments(task.attachments)
+                comments << Zensana::Zendesk::Comment.new(
+                  :author_id => requester.id,
+                  :value     => 'Attachments from original Asana task',
+                  :uploads   => tokens,
+                  :public    => true
                 ).attributes
               end
             end
           end
 
-          # process attachments on this task
-          if options[:attachments]
-
-            say " > downloading attachments "
-            download_attachments task.attachments
-
-            say " > uploading attachments "
-            tokens = upload_attachments task.attachments
-
-            comments << Zensana::Zendesk::Comment.new(
-              :author_id   => requester.id,
-              :value       => 'Attachments from original Asana task',
-              :attachments => tokens,
-              :public      => true
-            ).attributes
+          # if assignee is not an agent then leave unassigned
+          if (assignee_key = options[:default_user] || task.attributes['assignee'])
+            unless (assignee = asana_to_zendesk_user(assignee_key, false)) &&
+                (assignee.role != 'end-user')
+              assignee = nil
+            end
           end
+
+          # ready to import the ticket now!
+          ticket = Zensana::Zendesk::Ticket.new(
+            :requester_id => requester.id,
+            :external_id  => task.id,
+            :subject      => task.name,
+            :description  => <<-EOF,
+            This is an Asana task imported using zensana @ #{Time.now}
+
+                    Project:  #{@asana_project.name} (#{@asana_project.id})
+
+                 Task notes:  #{task.notes}
+
+            Task attributes:  #{task.attributes}
+            EOF
+            :assignee_id  => assignee ? assignee.id : '',
+            :created_at   => task.created_at,
+            :tags         => flatten_tags(project_tags, section_tags),
+            :comments     => comments
+          )
+          ticket.import
         end
-
-        # if assignee is not an agent then leave unassigned
-        assignee_key = options[:default_user] || task.assignee
-        unless (assignee = asana_to_zendesk_user(assignee_key, false)) &&
-            (assignee.role != 'end-user')
-          assignee = nil
-        end
-
-        # ready to import the ticket now!
-        ticket = Zensana::Zendesk::Ticket.new(
-          :requester_id => requester.id,
-          :external_id  => task.id,
-          :subject      => task.name,
-          :description  => <<-EOF,
-            Asana task imported #{now} using attributes:
-
-          #{task.attributes}
-          EOF
-          :assignee_id  => assignee ? assignee.id : '',
-          :created_at   => task.created_at,
-          :tags         => tags.flatten.uniq,
-          :comments     => comments
-        )
-        # ticket.import
-        binding.pry
       end
 
-      # rinse and repeat for sub-tasks and their sub-tasks and ...
-      say "... analysing sub-tasks ..."
-      task.sub_tasks.each do |sub|
-        task_to_ticket Zensana::Asana::Task.new(sub['id']), tag_list
+      # rinse and repeat for subtasks and their subtasks and ...
+      # we create a new section tag list for each recursed level
+      sub_section_tags = []
+      task.subtasks.each do |sub|
+        task_to_ticket Zensana::Asana::Task.new(sub.attributes['id']), project_tags, sub_section_tags
       end
 
-      # no longer need this task's tags
-      tag_list.pop
+      # this task's tags are now no longer required
+      # section tags remian until another section at this level
+      project_tags.pop
     end
 
     # lookup up asana user on zendesk and
@@ -189,11 +206,12 @@ using options #{options}
     # return: zendesk user or nil
     #
     def asana_to_zendesk_user(spec, create)
-      asana   = Zensana::Asana::User.new(spec)
+      key = spec.is_a?(Hash) ? spec['id'] : spec
+      asana   = Zensana::Asana::User.new(key)
       zendesk = Zensana::Zendesk::User.new
       zendesk.find(asana.email)
     rescue NotFound
-      if create?
+      if create
         zendesk.create(
           :email => asana.email,
           :name  => asana.name,
@@ -212,10 +230,13 @@ using options #{options}
     # the download process is restartable (idempotent)
     #
     def download_attachments(attachments)
+      return if attachments.nil? || attachments.empty?
+      say "\n >>> downloading attachments "
+
       attachments.each do |attachment|
         tries = 3
         begin
-          Zensana::Asana::Attachment.new(attachment['id']).download
+          attachment.download
           print '.'
         rescue
           retry unless (tries-= 1).zero?
@@ -230,11 +251,15 @@ using options #{options}
     # return: array of tokens
     #
     def upload_attachments(attachments)
+      return if attachments.nil? || attachments.empty?
+      say "\n >>> uploading attachments "
+
       [].tap do |tokens|
         attachments.each do |attachment|
           tries = 3
           begin
-            tokens << Zensana::Zendesk::Attachment.new.upload(attachment.full_path)
+            uploader = Zensana::Zendesk::Attachment.new
+            tokens << uploader.upload(attachment.full_path)['token']
             print '.'
           rescue
             retry unless (tries-= 1).zero?
@@ -242,6 +267,20 @@ using options #{options}
           end
         end
       end
+    end
+
+    # take multiple arrays and flatten them
+    #
+    # return: single array of unique tags
+    #
+    def flatten_tags(*args)
+      tags = []
+      args.each { |a| tags << a }
+      tags.flatten.uniq
+    end
+
+    def snake_case(string)
+      string.gsub(/(.)([A-Z])/,'\1_\2').downcase
     end
   end
 end

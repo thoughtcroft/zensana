@@ -1,3 +1,5 @@
+require 'pry'
+
 module Zensana
   class Asana
     class User
@@ -20,10 +22,10 @@ module Zensana
       private
 
       def fetch(id)
-        if cache['id'] then
-          cache['id']
+        if cache[id] then
+          cache[id]
         else
-          cache['id'] = asana_service.fetch("/users/#{id}")
+          cache[id] = asana_service.fetch("/users/#{id}")
         end
       end
 
