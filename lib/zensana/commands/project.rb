@@ -32,7 +32,7 @@ module Zensana
     option :attachments,  type: 'boolean', aliases: '-a', default: true,  desc: 'download and upload any attachments'
     option :completed,    type: 'boolean', aliases: '-c', default: false, desc: 'include tasks that are completed'
     option :default_user, type: 'string',  aliases: '-u', default: nil,   desc: 'set a default user to assign to tickets'
-#    option :followers,    type: 'boolean', aliases: '-f', default: false, desc: 'add followers of tasks to tickets'
+    #    option :followers,    type: 'boolean', aliases: '-f', default: false, desc: 'add followers of tasks to tickets'
     option :stories,      type: 'boolean', aliases: '-s', default: true,  desc: 'import stories as comments'
     option :verified,     type: 'boolean', aliases: '-v', default: true,  desc: '`false` will send email to zendesk users created'
     def convert(project)
@@ -46,10 +46,10 @@ This will convert the following Asana project into ZenDesk:
 
 using options #{options}
 
-        BANNER
+      BANNER
 
       unless yes?("Do you wish to proceed?", :yellow)
-        say "Nothing else for me to do, exiting...", :red
+        say "\nNothing else for me to do, exiting...\n", :red
         exit
       end
 
@@ -63,8 +63,7 @@ using options #{options}
       # section task which are also added to tickets
       #
       tags = [ 'zensana', 'imported' ]
-      tags.concat @asana_project.attributes[:tags] if @asana_project.attributes[:tags]
-      project_tags = Array(tags)
+      project_tags = [] << tags
       section_tags = []
 
       @asana_project.full_tasks.each do |task|
@@ -112,15 +111,14 @@ using options #{options}
         return
       end
 
-      # sections contribute their tags and any
-      # subtasks but no other processing by design
+      # sections contribute their tags but nothing else
       # and the same is true of tasks already created
       if task.is_section?
         say "\nProcessing section: #{task.section_name} "
         section_tags = task.tags << snake_case(task.section_name)
       else
         say "\nProcessing task: #{task.name} "
-        project_tags.push task.tags
+        project_tags.push snake_case(task.tags)
 
         if Zensana::Zendesk::Ticket.external_id_exists?(task.id)
           say "\n >>> skip ticket creation, task already imported ", :yellow
@@ -186,13 +184,13 @@ using options #{options}
           )
           ticket.import
         end
-      end
 
-      # rinse and repeat for subtasks and their subtasks and ...
-      # we create a new section tag list for each recursed level
-      sub_section_tags = []
-      task.subtasks.each do |sub|
-        task_to_ticket Zensana::Asana::Task.new(sub.attributes['id']), project_tags, sub_section_tags
+        # rinse and repeat for subtasks and their subtasks and ...
+        # we create a new section tag list for each recursed level
+        sub_section_tags = []
+        task.subtasks.each do |sub|
+          task_to_ticket Zensana::Asana::Task.new(sub.attributes['id']), project_tags, sub_section_tags
+        end
       end
 
       # this task's tags are now no longer required
@@ -279,8 +277,19 @@ using options #{options}
       tags.flatten.uniq
     end
 
-    def snake_case(string)
-      string.gsub(/(.)([A-Z])/,'\1_\2').downcase
+    def snake_case(thing)
+      case
+      when thing.is_a?(String)
+        snake_case_it thing
+      when thing.is_a?(Array)
+        thing.map { |a| snake_case a }
+      else
+        raise ArgumentError, "I don't know how to snake_case instances of #{thing.class}"
+      end
+    end
+
+    def snake_case_it(thing)
+      thing.gsub(/(.)([A-Z])/,'\1_\2').gsub(' ', '_').downcase
     end
   end
 end
