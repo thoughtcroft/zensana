@@ -1,5 +1,4 @@
 require 'json'
-require 'pry'
 
 module Zensana
   class Error < StandardError

@@ -1,5 +1,3 @@
-require 'pry'
-
 module Zensana
   class MissingKey    < Zensana::Error; end
   class UnknownKey    < Zensana::Error; end

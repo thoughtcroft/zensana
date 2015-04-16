@@ -1,5 +1,3 @@
-require 'pry'
-
 module Zensana
   class Command::Project < Zensana::Command
 

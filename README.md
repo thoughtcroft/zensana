@@ -22,7 +22,88 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+I had a specific use-case in developing this: to get off Asana as a
+support ticketing system and onto ZenDesk. So there aren't many tests
+(I know, I know) and there are only a few commands available in the cli.
+
+### CLI
+
+This uses Thor so follows the general pattern of
+
+    $ zensana COMMAND SUBCOMMAND OPTIONS
+
+The help is pretty self-explanatory around the options so just try that
+
+    $ zensana help
+      Commands:
+        zensana help [COMMAND]      # Describe available commands or one specific command
+        zensana project SUBCOMMAND  # perform actions on Asana projects
+
+#### project command
+
+The primary use for zensana is to convert an Asana project's tasks into
+ZenDesk tickets. The `convert` subcommand has quite a few options to
+control what gets converted.
+
+    $ zensana project help convert
+      Usage:
+        zensana convert PROJECT
+
+      Options:
+        -a, [--attachments], [--no-attachments]  # download and upload any attachments
+                                                 # Default: true
+        -c, [--completed], [--no-completed]      # include tasks that are completed
+        -u, [--default-user=DEFAULT_USER]        # set a default user to assign to tickets
+        -s, [--stories], [--no-stories]          # import stories as comments
+                                                 # Default: true
+        -v, [--verified], [--no-verified]        # `false` will send email to zendesk users created
+                                                 # Default: true
+
+      Convert PROJECT tasks to ZenDesk tickets (exact ID or NAME required)
+
+#### idempotentcy
+
+To ensure robustness of the conversion, especially given that internet
+connection issues may interrupt it, the project conversion is idempotent
+and can be restarted as many times as necessary. In particular
+
+* tasks that have already been successfully created will not be
+  recreated as tickets (the Asana task_id is stored as the Zendesk
+  ticket external_id)
+* attachments will only be downloaded if they do not exist in the
+  download directory
+
+### Classes
+
+You can also directly access classes which model Asana data objects.
+
+```ruby
+require 'zensana'
+
+my_project = Zensana::Asana::Project.new('My awesome Asana Project')
+
+my_project.full_tasks.each do |task|
+  puts "Task #{task.name} has tags: #{task.tags}"
+end
+```
+
+Check ../commands/project.rb for examples in action.
+
+#### Asana
+
+There is support for reading:
+* user
+* project
+* task
+* attachment - downloading
+
+#### ZenDesk
+
+There is support for accessing and updating:
+* user
+* ticket - via the Ticket Import API only
+* comment
+* attachment - uploading
 
 ## Authenticating
 
