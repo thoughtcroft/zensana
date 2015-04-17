@@ -4,6 +4,8 @@ This gem provides access to the Asana API and ZenDesk Ticket Import API
 for the purpose of importing tasks from Asana Projects into ZenDesk
 tickets.
 
+[![Gem Version](https://badge.fury.io/rb/zensana.svg)](http://badge.fury.io/rb/zensana)
+
 ## Installation
 
 Add this line to your application's Gemfile:
