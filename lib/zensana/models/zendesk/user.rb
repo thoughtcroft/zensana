@@ -53,8 +53,9 @@ module Zensana
 
       def lookup_by_email(email)
         unless (user = read_cache(email))
-          user = search("email:#{email}")
-          update_cache user
+          if (user = search("email:#{email}"))
+            update_cache user
+          end
         end
         user
       end
@@ -78,7 +79,7 @@ module Zensana
       end
 
       def update_cache(user)
-        [ :id, :email ].each do |attr|
+        [ 'id', 'email' ].each do |attr|
           key = user[attr].to_s
           cache[key] = user
         end

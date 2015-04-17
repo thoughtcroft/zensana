@@ -27,12 +27,12 @@ module Zensana
     end
 
     desc 'convert PROJECT', 'Convert PROJECT tasks to ZenDesk tickets (exact ID or NAME required)'
-    option :attachments,  type: 'boolean', aliases: '-a', default: true,  desc: 'download and upload any attachments'
-    option :completed,    type: 'boolean', aliases: '-c', default: false, desc: 'include tasks that are completed'
-    option :stories,      type: 'boolean', aliases: '-s', default: true,  desc: 'import stories as comments'
-    option :default_tag,  type: 'string',  aliases: '-t', default: nil,   desc: 'tag to be applied to every ticket imported'
-    option :default_user, type: 'string',  aliases: '-u', default: nil,   desc: 'set a default user to assign to tickets'
-    option :verified,     type: 'boolean', aliases: '-v', default: true,  desc: '`false` will send email to zendesk users created'
+    option :attachments,  type: 'boolean', aliases: '-a', default: true,        desc: 'download and upload any attachments'
+    option :completed,    type: 'boolean', aliases: '-c', default: false,       desc: 'include tasks that are completed'
+    option :global_tags,  type: 'array',   aliases: '-t', default: ['zensana'], desc: 'array of tag(s) to be applied to every ticket imported'
+    option :stories,      type: 'boolean', aliases: '-s', default: true,        desc: 'import stories as comments'
+    option :default_user, type: 'string',  aliases: '-u', default: nil,         desc: 'set a default user to assign to tickets'
+    option :verified,     type: 'boolean', aliases: '-v', default: true,        desc: '`false` will send email to zendesk users created'
     def convert(project)
       @asana_project = Zensana::Asana::Project.new(project)
       say <<-BANNER
@@ -60,8 +60,11 @@ using options #{options}
       # `section_tag_list` holds the tags for the last
       # section task which are also added to tickets
       #
-      tags = [ 'zensana', 'imported' ]
-      tags << options[:default_tag] if options[:default_tag]
+      tags = [ 'imported' ]
+      options[:global_tags].each do |t|
+        tags << normalize(t)
+      end
+      puts tags
       project_tags = [] << tags
       section_tags = []
 
@@ -157,9 +160,10 @@ using options #{options}
 
           # if assignee is not an agent then leave unassigned
           if (assignee_key = options[:default_user] || task.attributes['assignee'])
-            unless (assignee = asana_to_zendesk_user(assignee_key, false)) &&
-                (assignee.role != 'end-user')
-              assignee = nil
+            if (assignee = asana_to_zendesk_user(assignee_key, false))
+              unless assignee.attributes && assignee.attributes['role'] != 'end-user'
+                assignee = nil
+              end
             end
           end
 
@@ -177,12 +181,13 @@ using options #{options}
 
             Task attributes:  #{task.attributes}
             EOF
-            :assignee_id  => assignee ? assignee.id : '',
+            :assignee_id  => assignee ? assignee.id : nil,
             :created_at   => task.created_at,
             :tags         => flatten_tags(project_tags, section_tags),
             :comments     => comments
           )
           ticket.import
+          say "\n >>> ticket imported "
         end
 
         # rinse and repeat for subtasks and their subtasks and ...
