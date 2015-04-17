@@ -29,9 +29,9 @@ module Zensana
     desc 'convert PROJECT', 'Convert PROJECT tasks to ZenDesk tickets (exact ID or NAME required)'
     option :attachments,  type: 'boolean', aliases: '-a', default: true,  desc: 'download and upload any attachments'
     option :completed,    type: 'boolean', aliases: '-c', default: false, desc: 'include tasks that are completed'
-    option :default_user, type: 'string',  aliases: '-u', default: nil,   desc: 'set a default user to assign to tickets'
-    #    option :followers,    type: 'boolean', aliases: '-f', default: false, desc: 'add followers of tasks to tickets'
     option :stories,      type: 'boolean', aliases: '-s', default: true,  desc: 'import stories as comments'
+    option :default_tag,  type: 'string',  aliases: '-t', default: nil,   desc: 'tag to be applied to every ticket imported'
+    option :default_user, type: 'string',  aliases: '-u', default: nil,   desc: 'set a default user to assign to tickets'
     option :verified,     type: 'boolean', aliases: '-v', default: true,  desc: '`false` will send email to zendesk users created'
     def convert(project)
       @asana_project = Zensana::Asana::Project.new(project)
@@ -61,6 +61,7 @@ using options #{options}
       # section task which are also added to tickets
       #
       tags = [ 'zensana', 'imported' ]
+      tags << options[:default_tag] if options[:default_tag]
       project_tags = [] << tags
       section_tags = []
 
