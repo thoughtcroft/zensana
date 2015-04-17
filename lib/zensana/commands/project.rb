@@ -114,10 +114,10 @@ using options #{options}
       if task.is_section?
         say "\nProcessing section: #{task.section_name} "
         section_tags.pop
-        section_tags.push task.tags << snake_case(task.section_name)
+        section_tags.push task.tags << normalize(task.section_name)
       else
         say "\nProcessing task: #{task.name} "
-        project_tags.push snake_case(task.tags)
+        project_tags.push normalize(task.tags)
 
         if Zensana::Zendesk::Ticket.external_id_exists?(task.id)
           say "\n >>> skip ticket creation, task already imported ", :yellow
@@ -275,19 +275,19 @@ using options #{options}
       tags.flatten.uniq
     end
 
-    def snake_case(thing)
+    def normalize(thing)
       case
       when thing.is_a?(String)
-        snake_case_it thing
+        normalize_it thing
       when thing.is_a?(Array)
-        thing.map { |a| snake_case a }
+        thing.map { |a| normalize a }
       else
-        raise ArgumentError, "I don't know how to snake_case instances of #{thing.class}"
+        raise ArgumentError, "I don't know how to normalize instances of #{thing.class}"
       end
     end
 
-    def snake_case_it(thing)
-      thing.gsub(/(.)([A-Z])/,'\1_\2').gsub(' ', '_').downcase
+    def normalize_it(thing)
+      thing.gsub(/(\/| |-)+/,'_').downcase
     end
   end
 end
