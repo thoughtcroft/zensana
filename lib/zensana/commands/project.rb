@@ -64,7 +64,6 @@ using options #{options}
       options[:global_tags].each do |t|
         tags << normalize(t)
       end
-      puts tags
       project_tags = [] << tags
       section_tags = []
 
