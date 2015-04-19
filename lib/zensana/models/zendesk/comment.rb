@@ -15,8 +15,6 @@ module Zensana
 
       def initialize(attributes)
         validate_keys attributes
-        #id = attributes['author_id']
-        #raise NotFound, "Author #{id} does not exist" unless author_exists?(id)
         @attributes = attributes
       end
 
