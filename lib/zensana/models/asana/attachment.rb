@@ -13,11 +13,6 @@ module Zensana
         download_file unless downloaded?
       end
 
-      def download!
-        File.delete full_path if downloaded?
-        download_file
-      end
-
       def downloaded?
         File.exist? full_path
       end
