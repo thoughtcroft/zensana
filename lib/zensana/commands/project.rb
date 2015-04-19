@@ -157,15 +157,6 @@ using options #{options}
             end
           end
 
-          # if assignee is not an agent then leave unassigned
-          if (assignee_key = options[:default_user] || task.attributes['assignee'])
-            if (assignee = asana_to_zendesk_user(assignee_key, false))
-              unless assignee.attributes && assignee.attributes['role'] != 'end-user'
-                assignee = nil
-              end
-            end
-          end
-
           # ready to import the ticket now!
           ticket = Zensana::Zendesk::Ticket.new(
             :requester_id => requester.id,
@@ -180,7 +171,7 @@ using options #{options}
 
             Task attributes:  #{task.attributes}
             EOF
-            :assignee_id  => assignee ? assignee.id : nil,
+            :assignee_id  => zendesk_assignee_id(task),
             :created_at   => task.created_at,
             :tags         => flatten_tags(project_tags, section_tags),
             :comments     => comments
@@ -224,6 +215,21 @@ using options #{options}
       end
     else
       zendesk
+    end
+
+    # lookup the asana task assignee in zendesk and
+    # return their id if they are an agent or admin
+    #
+    def zendesk_assignee_id(task)
+      assignee_id = nil
+      if (assignee_key = options[:default_user] || task.attributes['assignee'])
+        if (assignee = asana_to_zendesk_user(assignee_key, false))
+          if assignee.attributes && assignee.attributes['role'] != 'end-user'
+            assignee_id = assignee.attributes['id']
+          end
+        end
+      end
+      assignee_id
     end
 
     # download the attachments to the local file system
