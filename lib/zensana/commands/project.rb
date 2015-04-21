@@ -201,19 +201,17 @@ using options #{options}
       key = spec.is_a?(Hash) ? spec['id'] : spec
       asana   = Zensana::Asana::User.new(key)
       zendesk = Zensana::Zendesk::User.new
-      zendesk.find(asana.email)
-    rescue NotFound
-      if create
-        zendesk.create(
-          :email => asana.email,
-          :name  => asana.name,
-          :verified => options[:verified]
-        )
-        zendesk
-      else
-        nil
+      unless zendesk.find(asana.email)
+        if create
+          zendesk.create(
+            :email => asana.email,
+            :name  => asana.name,
+            :verified => options[:verified]
+          )
+        else
+          zendesk = nil
+        end
       end
-    else
       zendesk
     end
 

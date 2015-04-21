@@ -21,9 +21,8 @@ module Zensana
 
       def create(attributes)
         validate_keys attributes
-        email = attributes['email'] || attributes['user']['email']
-        raise AlreadyExists, "User '#{email}' already exists" if lookup_by_email(email)
-      rescue NotFound
+        email = attributes['email'] || (attributes['user'] && attributes['user']['email'])
+        raise AlreadyExists, "User '#{email}' already exists" if email && lookup_by_email(email)
         user = create_user(attributes)
         update_cache user
         @attributes = user
