@@ -298,7 +298,7 @@ using options #{options}
     end
 
     def normalize_it(thing)
-      thing.gsub(/(\/| |-)+/,'_').downcase
+      thing.downcase.gsub(/([^a-z0-9])+/,'_')
     end
   end
 end
