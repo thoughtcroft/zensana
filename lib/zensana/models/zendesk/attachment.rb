@@ -3,6 +3,8 @@ module Zensana
     class Attachment
       include Zensana::Zendesk::Access
 
+      MAX_ATTACHMENT_SIZE = 2*10**6
+
       attr_reader :attributes
 
       def initialize
@@ -11,6 +13,10 @@ module Zensana
 
       def upload(filename)
         @attributes = upload_file(filename)
+      end
+
+      def too_big?(file)
+        File.size(file).to_f > MAX_ATTACHMENT_SIZE
       end
 
       def method_missing(name, *args, &block)

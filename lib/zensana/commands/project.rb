@@ -1,3 +1,5 @@
+require 'pry'
+
 module Zensana
   class Command::Project < Zensana::Command
 
@@ -31,7 +33,7 @@ module Zensana
     option :completed,    type: 'boolean', aliases: '-c', default: false,       desc: 'include tasks that are completed'
     option :global_tags,  type: 'array',   aliases: '-t', default: ['zensana'], desc: 'array of tag(s) to be applied to every ticket imported'
     option :stories,      type: 'boolean', aliases: '-s', default: true,        desc: 'import stories as comments'
-    option :default_user, type: 'string',  aliases: '-u', default: nil,         desc: 'set a default user to assign to tickets'
+    option :default_user, type: 'string',  aliases: '-u', default: nil,         desc: 'set a default user to assign to invalid asana user items'
     option :verified,     type: 'boolean', aliases: '-v', default: true,        desc: '`false` will send email to zendesk users created'
     def convert(project)
       @asana_project = Zensana::Asana::Project.new(project)
@@ -49,6 +51,16 @@ using options #{options}
       unless yes?("Do you wish to proceed?", :yellow)
         say "\nNothing else for me to do, exiting...\n", :red
         exit
+      end
+
+      if options[:default_user]
+        default_user = Zensana::Zendesk::User.new
+        if default_user.find(options[:default_user])
+          options[:default_user] = default_user
+        else
+          say "\nDefault user '#{options[:default_user]}' does not exist in ZenDesk!\n", :red
+          exit(1)
+        end
       end
 
       # LIFO tags for recursive tagging
@@ -109,6 +121,9 @@ using options #{options}
     def task_to_ticket(task, project_tags, section_tags )
       if task.attributes['completed'] && !options[:completed]
         say "\nSkipping completed task: #{task.name}! ", :yellow
+        return
+      elsif task.attributes['name'].nil? || task.attributes['name'].empty?
+        say "\nSkipping blank task: #{task.id}! ", :yellow
         return
       end
 
@@ -171,13 +186,13 @@ using options #{options}
 
             Task attributes:  #{task.attributes}
             EOF
-            :assignee_id  => zendesk_assignee_id(task),
+            :assignee_id  => zendesk_assignee_id(task.attributes['assignee']),
             :created_at   => task.created_at,
             :tags         => flatten_tags(project_tags, section_tags),
             :comments     => comments
           )
           ticket.import
-          say "\n >>> ticket imported "
+          say "\n >>> ticket successfully imported ", :green
         end
 
         # rinse and repeat for subtasks and their subtasks and ...
@@ -194,40 +209,44 @@ using options #{options}
 
     # lookup up asana user on zendesk and
     # optionally create new if not exists
+    # NOTE: if asana user is invalid we
+    # must substitute the default user
     #
     # return: zendesk user or nil
     #
     def asana_to_zendesk_user(spec, create)
       key = spec.is_a?(Hash) ? spec['id'] : spec
       asana   = Zensana::Asana::User.new(key)
-      zendesk = Zensana::Zendesk::User.new
-      unless zendesk.find(asana.email)
-        if create
-          zendesk.create(
-            :email => asana.email,
-            :name  => asana.name,
-            :verified => options[:verified]
-          )
-        else
-          zendesk = nil
+      unless asana.attributes['email']
+        raise NotFound, "Invalid asana email in #{asana}; please provide 'default_user' option" unless options[:default_user]
+        zendesk = options[:default_user]
+      else
+        zendesk = Zensana::Zendesk::User.new
+        unless zendesk.find(asana.email)
+          if create
+            zendesk.create(
+              :email => asana.email,
+              :name  => asana.name,
+              :verified => options[:verified]
+            )
+          else
+            zendesk = nil
+          end
         end
       end
       zendesk
     end
 
-    # lookup the asana task assignee in zendesk and
+    # lookup the asana user in zendesk and
     # return their id if they are an agent or admin
     #
-    def zendesk_assignee_id(task)
-      assignee_id = nil
-      if (assignee_key = options[:default_user] || task.attributes['assignee'])
-        if (assignee = asana_to_zendesk_user(assignee_key, false))
-          if assignee.attributes && assignee.attributes['role'] != 'end-user'
-            assignee_id = assignee.attributes['id']
-          end
+    def zendesk_assignee_id(asana_user_id)
+      if (assignee = asana_to_zendesk_user(asana_user_id, false))
+        if assignee.attributes && assignee.attributes['role'] != 'end-user'
+          assignee_id = assignee.attributes['id']
         end
       end
-      assignee_id
+      assignee_id || (options[:default_user] ? options[:default_user].attributes['id'] : nil)
     end
 
     # download the attachments to the local file system
@@ -262,10 +281,15 @@ using options #{options}
       [].tap do |tokens|
         attachments.each do |attachment|
           tries = 3
+          file = attachment.full_path
           begin
             uploader = Zensana::Zendesk::Attachment.new
-            tokens << uploader.upload(attachment.full_path)['token']
-            print '.'
+            if uploader.too_big?(file)
+              say "\n --> skip: #{file} exceeds filesize limit! ", :red
+            else
+              tokens << uploader.upload(attachment.full_path)['token']
+              print '.'
+            end
           rescue
             retry unless (tries-= 1).zero?
             raise
