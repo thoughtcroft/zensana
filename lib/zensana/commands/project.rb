@@ -115,7 +115,7 @@ using options #{options}
       end
     end
 
-    # convert and asana task into a zendesk ticket
+    # convert an asana task into a zendesk ticket
     # calls itself recursively for subtasks
     #
     def task_to_ticket(task, project_tags, section_tags )
@@ -197,7 +197,7 @@ using options #{options}
 
         # rinse and repeat for subtasks and their subtasks and ...
         # we create a new section tag list for each recursed level
-        sub_section_tags = []
+        sub_section_tags = section_tags.dup << []
         task.subtasks.each do |sub|
           task_to_ticket Zensana::Asana::Task.new(sub.attributes['id']), project_tags, sub_section_tags
         end
