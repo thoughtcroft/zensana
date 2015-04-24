@@ -5,7 +5,7 @@ module Zensana
     include HTTMultiParty
     base_uri 'https://app.asana.com/api/1.0'
     headers 'Content-Type' => 'application/json; charset=utf-8'
-    default_timeout 10
+    default_timeout ( ENV['ZENSANA_TIMEOUT'] || 20 ).to_i
     #debug_output
 
     def self.inst

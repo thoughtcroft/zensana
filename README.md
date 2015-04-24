@@ -103,6 +103,7 @@ There is support for reading:
 
 There is support for accessing and updating:
 * user
+* agent group (read-only)
 * ticket - via the Ticket Import API only
 * comment
 * attachment - uploading
@@ -132,6 +133,11 @@ ZENDESK_USERNAME
 ZENDESK_PASSWORD
 ZENDESK_DOMAIN
 ```
+
+## Other Environment Vars
+
+The default http timeout of 20 seconds can be over-ridden by supplying a
+suitable value as an environment var called `ZENSANA_TIMEOUT`
 
 ## Contributing
 

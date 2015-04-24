@@ -3,7 +3,7 @@ require 'httmultiparty'
 module Zensana
   class Zendesk
     include HTTMultiParty
-    default_timeout 20
+    default_timeout ( ENV['ZENSANA_TIMEOUT'] || 20 ).to_i
     #debug_output
 
     def self.inst
