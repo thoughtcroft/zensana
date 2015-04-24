@@ -5,7 +5,7 @@ module Zensana
 
     desc 'find PROJECT', 'List projects that match PROJECT (by ID or NAME, regexp accepted)'
     def find(name)
-      puts Zensana::Asana::Project.search(name).collect { |p| p['name'] }.sort
+      puts Zensana::Asana::Project.search(name).collect { |p| "#{p['id']}: #{p['name']}" }.sort
     end
 
     desc 'show PROJECT', 'Display details of PROJECT (choosing from list matching ID or NAME, regexp accepted)'
@@ -32,6 +32,7 @@ module Zensana
     option :attachments,  type: 'boolean', aliases: '-a', default: true,        desc: 'download and upload any attachments'
     option :completed,    type: 'boolean', aliases: '-c', default: false,       desc: 'include tasks that are completed'
     option :global_tags,  type: 'array',   aliases: '-t', default: ['zensana'], desc: 'array of tag(s) to be applied to every ticket imported'
+    option :group_id,     type: 'numeric', aliases: '-g', default: nil,         desc: 'ZenDesk group_id to assign tickets to - must not conflict with default_user'
     option :stories,      type: 'boolean', aliases: '-s', default: true,        desc: 'import stories as comments'
     option :default_user, type: 'string',  aliases: '-u', default: nil,         desc: 'set a default user to assign to invalid asana user items'
     option :verified,     type: 'boolean', aliases: '-v', default: true,        desc: '`false` will send email to zendesk users created'
@@ -79,8 +80,8 @@ using options #{options}
       project_tags = [] << tags
       section_tags = []
 
-      @asana_project.full_tasks.each do |task|
-        task_to_ticket task, project_tags, section_tags
+      @asana_project.task_list.each do |task|
+        task_to_ticket task['id'], project_tags, section_tags
       end
       say "\n\n ---> Finished!\n\n", :green
     end
@@ -118,7 +119,8 @@ using options #{options}
     # convert an asana task into a zendesk ticket
     # calls itself recursively for subtasks
     #
-    def task_to_ticket(task, project_tags, section_tags )
+    def task_to_ticket(task_id, project_tags, section_tags )
+      task = Zensana::Asana::Task.new(task_id)
       if task.attributes['completed'] && !options[:completed]
         say "\nSkipping completed task: #{task.name}! ", :yellow
         return
@@ -187,6 +189,7 @@ using options #{options}
             Task attributes:  #{task.attributes}
             EOF
             :assignee_id  => zendesk_assignee_id(task.attributes['assignee']),
+            :group_id     => options[:group_id],
             :created_at   => task.created_at,
             :tags         => flatten_tags(project_tags, section_tags),
             :comments     => comments
@@ -199,7 +202,7 @@ using options #{options}
         # we create a new section tag list for each recursed level
         sub_section_tags = section_tags.dup << []
         task.subtasks.each do |sub|
-          task_to_ticket Zensana::Asana::Task.new(sub.attributes['id']), project_tags, sub_section_tags
+          task_to_ticket sub.attributes['id'], project_tags, sub_section_tags
         end
 
         # this task's tags are now no longer required

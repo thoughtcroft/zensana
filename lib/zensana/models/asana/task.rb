@@ -15,7 +15,7 @@ module Zensana
       end
 
       def tags
-        attributes['tags'].map { |t| snake_case t['name'] } if attributes['tags']
+        attributes['tags'].map { |t| t['name'] } if attributes['tags']
       end
 
       def is_section?
@@ -76,10 +76,6 @@ module Zensana
 
       def opt_fields
         FIELDS.map { |f| f.to_s }.join(',')
-      end
-
-      def snake_case(string)
-        string.gsub(/(.)([A-Z])/,'\1_\2').downcase
       end
     end
   end
