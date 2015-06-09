@@ -32,12 +32,16 @@ module Zensana
           :headers => {
             "Content-Type" => "application/binary"
           },
-          :detect_mime_type => true,
+          :detect_mime_type => mime_type_known?(file),
           :body => {
             "filename"      => "#{File.basename(file)}",
             "uploaded_data" => File.new(file)
           },
           )['upload']
+      end
+
+      def mime_type_known?(file)
+        ! [ '.cshtml' ].include? File.extname(file)
       end
     end
   end
