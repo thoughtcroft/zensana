@@ -31,6 +31,7 @@ module Zensana
     desc 'convert PROJECT', 'Convert PROJECT tasks to ZenDesk tickets (exact ID or NAME required)'
     option :attachments,  type: 'boolean', aliases: '-a', default: true,        desc: 'download and upload any attachments'
     option :completed,    type: 'boolean', aliases: '-c', default: false,       desc: 'include tasks that are completed'
+    option :followers,    type: 'boolean', aliases: '-f', default: false,       desc: 'add task followers to ticket as cc'
     option :global_tags,  type: 'array',   aliases: '-t', default: ['zensana'], desc: 'array of tag(s) to be applied to every ticket imported'
     option :group_id,     type: 'numeric', aliases: '-g', default: nil,         desc: 'ZenDesk group_id to assign tickets to - must not conflict with default_user'
     option :stories,      type: 'boolean', aliases: '-s', default: true,        desc: 'import stories as comments'
@@ -174,12 +175,21 @@ using options #{options}
             end
           end
 
+          # add followers as collaborators
+          if options[:followers]
+            collaborators = []
+            task.followers.each do |follower|
+              unless follower == task.created_by
+                if collaborator = asana_to_zendesk_user(follower, true)
+                  collaborators << collaborator.id
+                end
+              end
+            end
+          end
+
           # ready to import the ticket now!
           ticket = Zensana::Zendesk::Ticket.new(
-            :requester_id => requester.id,
-            :external_id  => task.id,
-            :subject      => task.name,
-            :description  => <<-EOF,
+            :description      => <<-EOF,
             This is an Asana task imported using zensana @ #{Time.now}
 
                     Project:  #{@asana_project.name} (#{@asana_project.id})
@@ -188,11 +198,15 @@ using options #{options}
 
             Task attributes:  #{task.attributes}
             EOF
-            :assignee_id  => zendesk_assignee_id(task.attributes['assignee']),
-            :group_id     => options[:group_id],
-            :created_at   => task.created_at,
-            :tags         => flatten_tags(project_tags, section_tags),
-            :comments     => comments
+            :requester_id     => requester.id,
+            :external_id      => task.id,
+            :subject          => task.name,
+            :assignee_id      => zendesk_assignee_id(task.attributes['assignee']),
+            :group_id         => options[:group_id],
+            :created_at       => task.created_at,
+            :tags             => flatten_tags(project_tags, section_tags),
+            :comments         => comments,
+            :collaborator_ids => collaborators
           )
           ticket.import
           say "\n >>> ticket successfully imported ", :green

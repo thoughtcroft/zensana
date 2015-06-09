@@ -55,9 +55,13 @@ control what gets converted.
         -a, [--attachments], [--no-attachments]  # download and upload any attachments
                                                  # Default: true
         -c, [--completed], [--no-completed]      # include tasks that are completed
-        -u, [--default-user=DEFAULT_USER]        # set a default user to assign to tickets
+        -f, [--followers], [--no-followers]      # add task followers to ticket as cc
+        -t, [--global-tags=one two three]        # array of tag(s) to be applied to every ticket imported
+                                                 # Default: ["zensana"]
+        -g, [--group-id=N]                       # ZenDesk group_id to assign tickets to - must not conflict with default_user
         -s, [--stories], [--no-stories]          # import stories as comments
                                                  # Default: true
+        -u, [--default-user=DEFAULT_USER]        # set a default user to assign to invalid asana user items
         -v, [--verified], [--no-verified]        # `false` will send email to zendesk users created
                                                  # Default: true
 
