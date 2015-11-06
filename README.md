@@ -38,8 +38,28 @@ The help is pretty self-explanatory around the options so just try that
 
     $ zensana help
       Commands:
+        zensana group SUBCOMMAND    # perform actions on ZenDesk agent groups
         zensana help [COMMAND]      # Describe available commands or one specific command
         zensana project SUBCOMMAND  # perform actions on Asana projects
+        zensana view SUBCOMMAND     # perform actions on ZenDesk views
+
+#### group command
+
+There is one command for Zendesk groups:
+
+    zensana group find GROUP      # List ZenDesk agent groups that match GROUP (by ID or NAME, regexp accepted)
+
+#### view command
+
+There is one command to generate an export of Zendesk tickets from a
+defined view (provide its id):
+
+    zensana view export VIEW     # Export Zendesk VIEW using the predetermined fields
+
+The csv will contain the following fields:
+
+    Id, Status, Subject, Component, Description,
+    Requester, RequestDate, SolvedDate, Duration
 
 #### project command
 
@@ -67,7 +87,7 @@ control what gets converted.
 
       Convert PROJECT tasks to ZenDesk tickets (exact ID or NAME required)
 
-#### idempotentcy
+##### idempotentcy
 
 To ensure robustness of the conversion, especially given that internet
 connection issues may interrupt it, the project conversion is idempotent
