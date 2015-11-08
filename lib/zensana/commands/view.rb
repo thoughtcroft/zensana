@@ -1,5 +1,4 @@
 require 'csv'
-require 'pry'
 
 module Zensana
   class Command::View < Zensana::Command
