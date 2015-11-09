@@ -11,8 +11,12 @@ module Zensana
         @attributes = {}
       end
 
+      def list(active_only = true)
+        fetch_list(active_only)
+      end
+
       def find(id)
-        @attributes = fetch(id)
+        @attributes = fetch_view(id)
       end
 
       def tickets
@@ -30,8 +34,13 @@ module Zensana
 
       private
 
-      def fetch(id)
+      def fetch_view(id)
         zendesk_service.fetch("/views/#{id}.json")['view']
+      end
+
+      def fetch_list(active_only=true)
+        url = active_only ? "/views/active.json/" : "/views.json"
+        zendesk_service.fetch(url)['views']
       end
 
       def get_tickets(id)

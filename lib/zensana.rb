@@ -1,4 +1,5 @@
 require 'zensana/version'
+require 'zensana/helpers'
 
 require 'zensana/services/asana'
 require 'zensana/services/error'

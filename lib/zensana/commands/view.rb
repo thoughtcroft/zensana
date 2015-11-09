@@ -2,20 +2,28 @@ require 'csv'
 
 module Zensana
   class Command::View < Zensana::Command
+    include Zensana::Helpers
 
-    desc 'export VIEW', 'Export Zendesk VIEW using the predetermined fields'
-    def export(id)
+    desc 'export', 'Export Zendesk View using the predetermined fields'
+    option :view, type: 'string', aliases: '-v', default: nil, desc: 'specific view number to export'
+    def export
       view = Zensana::Zendesk::View.new
-      view.find(id)
 
-      unless yes?("This will export the tickets in the view called '#{view.title}' as a CSV. Proceed?", :yellow)
-        say "\nNothing else for me to do, exiting...\n", :red
-        exit
+      if view_id = options[:view]
+        view.find(view_id)
+        unless yes?("\nThis will export the tickets in the Zendesk View called '#{view.title}' as a CSV. Proceed?", :yellow)
+          say EXIT_SELECTION_MSG, :red
+          exit
+        end
+      else
+        views = view.list.map { |v| { :key => v['id'], :value => v['title'] } }.sort_by { |i| i[:value] }
+        view_id = ask_which_item(views, "\nChoose the Zendesk View you wish to export", :single).first
+        view.find(view_id)
       end
 
       tickets = view.tickets
 
-      csv_file = "zendesk_export_view_#{id}_#{Time.now.strftime('%Y_%m_%d_%H%M')}.csv"
+      csv_file = "zendesk_export_view_#{view_id}_#{Time.now.strftime('%Y_%m_%d_%H%M')}.csv"
       Dir.chdir file_dir = File.join(Dir.home, 'Downloads')
 
       CSV.open(csv_file, 'w') do |output|

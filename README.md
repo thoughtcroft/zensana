@@ -52,9 +52,12 @@ There is one command for Zendesk groups:
 #### view command
 
 There is one command to generate an export of Zendesk tickets from a
-defined view (provide its id):
+defined view. Pass in a specific view number or select from the list of
+all views available to you:
 
-    zensana view export VIEW     # Export Zendesk VIEW using the predetermined fields
+    zensana view export     # Export Zendesk View using the predetermined fields
+      Options:
+        -v, [--view=VIEW]   # specific view number to export
 
 The csv will contain the following fields:
 
