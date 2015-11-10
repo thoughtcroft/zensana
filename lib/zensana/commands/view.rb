@@ -27,7 +27,7 @@ module Zensana
       Dir.chdir file_dir = File.join(Dir.home, 'Downloads')
 
       CSV.open(csv_file, 'w') do |output|
-        output << %w(Id Status Subject Component Description Requester RequestDate SolvedDate Duration)
+        output << %w(Id Status Subject Component Description Requester RequestDate SolvedDate Duration DevEscalated?)
         tickets.each do |ticket|
           output.puts transform_ticket(ticket)
         end
@@ -52,6 +52,7 @@ module Zensana
       fields << created.to_s
       fields << updated.to_s
       fields << (updated - created).to_i
+      fields << jira_escalated?(ticket['tags'])
     end
 
     def get_user_name(id)
@@ -60,7 +61,15 @@ module Zensana
     end
 
     def get_component(fields)
-      get_custom_field(fields, '24375555').split('_').last
+      get_custom_field(fields, component_key).split('_').last
+    end
+
+    def component_key
+      '24375555'
+    end
+
+    def jira_escalated?(fields)
+      fields.include? 'jira_escalated'
     end
 
     def get_custom_field(fields, id)
@@ -87,11 +96,11 @@ module Zensana
 
     def ignore_list
       [
-        'Original Message', 'From:', 'Sent:',
-        'To:', 'Cc:', 'Subject:',
-        '---', '___', 'Hi ', 'Hi,'
+        'Original Message',
+        'From:', 'Sent:', 'To:', 'Cc:',
+        'Subject:','---', '___',
+        'Hello', 'Hi ', 'Hi,'
       ]
     end
-
   end
 end
